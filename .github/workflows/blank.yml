@@ -1,0 +1,99 @@
+import random
+import os
+
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def create_grid(size):
+    return [[' ' for _ in range(size)] for _ in range(size)]
+
+def display_grid(grid, show_ships=False):
+    print("  A B C D E F G")
+    for i, row in enumerate(grid):
+        row_display = ""
+        for cell in row:
+            if show_ships or cell in {'X', 'M'}:
+                row_display += f"{cell} "
+            else:
+                row_display += "  "
+        print(f"{i + 1} {row_display}")
+
+def place_ships(grid):
+    ship_sizes = [3, 2, 2, 1, 1, 1, 1]
+    for size in ship_sizes:
+        placed = False
+        while not placed:
+            x, y = random.randint(0, 6), random.randint(0, 6)
+            direction = random.choice([(1, 0), (0, 1)])  # Vertical or horizontal
+            positions = []
+            for i in range(size):
+                nx, ny = x + i * direction[0], y + i * direction[1]
+                if 0 <= nx < 7 and 0 <= ny < 7 and grid[nx][ny] == ' ':
+                    positions.append((nx, ny))
+                else:
+                    break
+            if len(positions) == size:
+                for px, py in positions:
+                    grid[px][py] = 'O'
+                placed = True
+
+def get_input():
+    while True:
+        shot = input("Enter shot (e.g., A3): ").upper()
+        if len(shot) >= 2 and shot[0].isalpha() and shot[1:].isdigit():
+            x = int(shot[1:]) - 1
+            y = ord(shot[0]) - 65
+            if 0 <= x < 7 and 0 <= y < 7:
+                return x, y
+        print("Invalid input, try again.")
+
+def all_ships_sunk(grid):
+    for row in grid:
+        if 'O' in row:
+            return False
+    return True
+
+def play_game():
+    name = input("Enter your name: ").strip()
+    ships = create_grid(7)
+    board = create_grid(7)
+    place_ships(ships)
+    shots = 0
+
+    while not all_ships_sunk(ships):
+        clear_screen()
+        print(f"{name}'s Battlefield:")
+        display_grid(board)
+        x, y = get_input()
+        if board[x][y] != ' ':
+            print("You already shot there!")
+            input("Press Enter to continue...")
+            continue
+        shots += 1
+        if ships[x][y] == 'O':
+            ships[x][y] = board[x][y] = 'X'
+            print("Hit!")
+        else:
+            board[x][y] = 'M'
+            print("Miss!")
+        input("Press Enter to continue...")
+
+    clear_screen()
+    print(f"Congratulations, {name}! You sank all the ships in {shots} shots.")
+    return name, shots
+
+def main():
+    scores = {}
+    while True:
+        name, shots = play_game()
+        scores[name] = shots
+        if input("Play again? (yes/no): ").strip().lower() != 'yes':
+            break
+
+    clear_screen()
+    print("Leaderboard:")
+    for name in sorted(scores, key=scores.get):
+        print(f"{name}: {scores[name]} shots")
+
+if __name__ == "__main__":
+    main()
